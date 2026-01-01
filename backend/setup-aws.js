@@ -31,6 +31,26 @@ const tables = [
             { AttributeName: 'productId', AttributeType: 'S' }
         ],
         ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
+    },
+    {
+        TableName: 'Transactions',
+        KeySchema: [{ AttributeName: 'transactionId', KeyType: 'HASH' }],
+        AttributeDefinitions: [
+            { AttributeName: 'transactionId', AttributeType: 'S' },
+            { AttributeName: 'sellerId', AttributeType: 'S' }
+        ],
+        GlobalSecondaryIndexes: [
+            {
+                IndexName: 'SellerTransactionsIndex',
+                KeySchema: [
+                    { AttributeName: 'sellerId', KeyType: 'HASH' },
+                    { AttributeName: 'transactionId', KeyType: 'RANGE' }
+                ],
+                Projection: { ProjectionType: 'ALL' },
+                ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
+            }
+        ],
+        ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
     }
 ];
 

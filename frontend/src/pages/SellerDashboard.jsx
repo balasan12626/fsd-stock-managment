@@ -23,14 +23,17 @@ import {
 
 const SellerDashboard = () => {
     const navigate = useNavigate();
-    const { logout, seller } = useAuth();
+    const { logout, user: seller } = useAuth();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [statusMessage, setStatusMessage] = useState({ type: '', text: '' });
 
+    const [lowStockItems, setLowStockItems] = useState([]);
+    const [recentTransactions, setRecentTransactions] = useState([]);
+
     useEffect(() => {
-        fetchProducts();
+        fetchDashboardData();
     }, []);
 
     const showStatus = (type, text) => {
@@ -38,13 +41,20 @@ const SellerDashboard = () => {
         setTimeout(() => setStatusMessage({ type: '', text: '' }), 5000);
     };
 
-    const fetchProducts = async () => {
+    const fetchDashboardData = async () => {
         try {
             setLoading(true);
-            const response = await productAPI.getSellerProducts();
-            setProducts(response.data);
+            const [productsRes, reportRes] = await Promise.all([
+                productAPI.getSellerProducts(),
+                sellerAPI.getReport()
+            ]);
+            setProducts(productsRes.data);
+            if (reportRes.data.success) {
+                setLowStockItems(reportRes.data.report.lowStockItems);
+                setRecentTransactions(reportRes.data.report.recentTransactions);
+            }
         } catch (err) {
-            showStatus('error', 'CORE LINK FAILURE: Failed to sync with product grid.');
+            showStatus('error', 'CORE LINK FAILURE: Failed to sync with dashboard data.');
         } finally {
             setLoading(false);
         }
@@ -169,7 +179,23 @@ const SellerDashboard = () => {
                                     New Product
                                 </button>
                                 <button
-                                    onClick={fetchProducts}
+                                    onClick={() => navigate('/sell/reports')}
+                                    className="w-full py-4 rounded-xl font-black tracking-[0.15em] text-[10px] uppercase transition-all flex items-center justify-center gap-2"
+                                    style={{ background: 'var(--accent-magenta)', border: '1px solid var(--border-color)', color: 'white' }}
+                                >
+                                    <BarChart3 className="w-4 h-4" />
+                                    Performance Hub
+                                </button>
+                                <button
+                                    onClick={() => navigate('/sell/transactions')}
+                                    className="w-full py-4 rounded-xl font-black tracking-[0.15em] text-[9px] uppercase transition-all flex items-center justify-center gap-2"
+                                    style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-secondary)' }}
+                                >
+                                    <Activity className="w-4 h-4" />
+                                    Activity Log
+                                </button>
+                                <button
+                                    onClick={fetchDashboardData}
                                     className="w-full py-4 rounded-xl font-black tracking-[0.15em] text-[9px] uppercase transition-all flex items-center justify-center gap-2"
                                     style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-secondary)' }}
                                 >
@@ -182,6 +208,19 @@ const SellerDashboard = () => {
 
                     {/* Main Content Area */}
                     <div className="lg:col-span-3 space-y-10">
+                        {/* Low Stock Alerts */}
+                        {lowStockItems.length > 0 && (
+                            <div className="glass-card rounded-2xl p-6 border-l-4 border-amber-500 bg-amber-500/5 animate-pulse-slow">
+                                <div className="flex items-center gap-4">
+                                    <AlertTriangle className="w-6 h-6 text-amber-500" />
+                                    <div>
+                                        <h4 className="text-sm font-black uppercase tracking-widest text-white">Low Stock Warning</h4>
+                                        <p className="text-xs text-slate-400">{lowStockItems.length} units are operating below safety threshold.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Summary Block */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                             {[
@@ -276,8 +315,17 @@ const SellerDashboard = () => {
                                                     <div className="flex justify-between items-center text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase italic">
                                                         <span>Loadout: {p.quantity} Units</span>
                                                         <span className="flex items-center gap-2">
-                                                            <div className="w-2 h-2 rounded-full bg-cyan-500 glow-cyan"></div>
-                                                            SYNCHRONIZED
+                                                            {p.isLowStock ? (
+                                                                <>
+                                                                    <div className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></div>
+                                                                    <span className="text-amber-500">LOW STOCK</span>
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <div className="w-2 h-2 rounded-full bg-cyan-500 glow-cyan"></div>
+                                                                    <span>SYNCHRONIZED</span>
+                                                                </>
+                                                            )}
                                                         </span>
                                                     </div>
 

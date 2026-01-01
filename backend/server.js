@@ -4,7 +4,12 @@ require('dotenv').config();
 
 const { registerSeller, loginSeller, getSellerProfile, refreshToken } = require('./controllers/sellerController');
 const { addProduct, updateProduct, deleteProduct, getSellerProducts } = require('./controllers/productController');
+const { registerAdmin, loginAdmin, getAdminProfile, getAllAdmins, updateAdminStatus } = require('./controllers/adminController');
+const { getSellerPerformanceReport, getSellerDetailedReport } = require('./controllers/analyticsController');
+const { getAllProducts, getAllSellers, getProductWithSeller, getDashboardStats, deleteProductAsAdmin } = require('./controllers/adminDashboardController');
+const { getSellerTransactions, postTransaction } = require('./controllers/transactionsController');
 const authMiddleware = require('./middleware/authMiddleware');
+const adminMiddleware = require('./middleware/adminMiddleware');
 const upload = require('./middleware/uploadMiddleware');
 
 const app = express();
@@ -25,19 +30,37 @@ app.use((req, res, next) => {
     next();
 });
 
-// Public routes
+// Public routes - Seller
 app.post('/api/seller/register', upload.single('logo'), registerSeller);
 app.post('/api/seller/login', loginSeller);
+
+// Public routes - Admin
+app.post('/api/admin/register', registerAdmin);
+app.post('/api/admin/login', loginAdmin);
 
 // Protected seller routes
 app.get('/api/seller/profile', authMiddleware, getSellerProfile);
 app.post('/api/seller/refresh-token', authMiddleware, refreshToken);
+app.get('/api/seller/report', authMiddleware, getSellerDetailedReport);
 
 // Protected product routes
 app.post('/api/product/add', authMiddleware, upload.array('images', 5), addProduct);
 app.put('/api/product/update', authMiddleware, updateProduct);
+app.post('/api/transactions', authMiddleware, postTransaction);
 app.delete('/api/product/delete/:productId', authMiddleware, deleteProduct);
 app.get('/api/product/seller-products', authMiddleware, getSellerProducts);
+app.get('/api/transactions/seller', authMiddleware, getSellerTransactions);
+
+// Protected admin routes
+app.get('/api/admin/profile', adminMiddleware, getAdminProfile);
+app.get('/api/admin/products', adminMiddleware, getAllProducts);
+app.get('/api/admin/sellers', adminMiddleware, getAllSellers);
+app.get('/api/admin/products/:productId', adminMiddleware, getProductWithSeller);
+app.get('/api/admin/stats', adminMiddleware, getDashboardStats);
+app.delete('/api/admin/products/:productId', adminMiddleware, deleteProductAsAdmin);
+app.get('/api/admin/manage/all', adminMiddleware, getAllAdmins);
+app.put('/api/admin/manage/status/:adminId', adminMiddleware, updateAdminStatus);
+app.get('/api/admin/reports/seller-performance', adminMiddleware, getSellerPerformanceReport);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

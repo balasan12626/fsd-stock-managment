@@ -14,7 +14,13 @@
         "axios": "^1.6.2",
         "lucide-react": "^0.294.0",
         "react-datepicker": "^4.24.0",
-        "date-fns": "^2.30.0"
+        "date-fns": "^2.30.0",
+        "chart.js": "^4.4.1",
+        "react-chartjs-2": "^5.2.0",
+        "jspdf": "^2.5.1",
+        "jspdf-autotable": "^3.8.1",
+        "html2canvas": "^1.4.1",
+        "papaparse": "^5.4.1"
     },
     "devDependencies": {
         "@types/react": "^18.2.43",

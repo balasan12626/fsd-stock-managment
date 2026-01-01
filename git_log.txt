@@ -1,0 +1,69 @@
+Starting Git Operations 
+Checking Status 
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	deleted:    backend/check-table-schema.js
+	deleted:    backend/check_version.js
+	modified:   backend/controllers/productController.js
+	modified:   backend/server.js
+	modified:   backend/setup-aws.js
+	deleted:    backend/test-aws.js
+	deleted:    backend/test-dynamo-v3.js
+	deleted:    backend/test-upload-client.js
+	deleted:    backend/test-upload-server.js
+	modified:   frontend/index.html
+	modified:   frontend/package.json
+	modified:   frontend/src/App.jsx
+	modified:   frontend/src/components/ProtectedRoute.jsx
+	modified:   frontend/src/context/AuthContext.jsx
+	modified:   frontend/src/index.css
+	modified:   frontend/src/pages/SellerDashboard.jsx
+	modified:   frontend/src/services/api.js
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	backend/controllers/adminController.js
+	backend/controllers/adminDashboardController.js
+	backend/controllers/analyticsController.js
+	backend/controllers/transactionsController.js
+	backend/middleware/adminMiddleware.js
+	backend/run_install.js
+	backend/setup-admins-table.js
+	frontend/src/pages/AdminDashboard.jsx
+	frontend/src/pages/AdminLogin.jsx
+	frontend/src/pages/AdminRegister.jsx
+	frontend/src/pages/SellerAnalytics.jsx
+	frontend/src/pages/SellerReports.jsx
+	frontend/src/pages/TransactionHistory.jsx
+	frontend/test_write.txt
+	git_log.txt
+	git_push.bat
+	test_write_root.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
+ 
+Switching to secondreview 
+D	backend/check-table-schema.js
+D	backend/check_version.js
+M	backend/controllers/productController.js
+M	backend/server.js
+M	backend/setup-aws.js
+D	backend/test-aws.js
+D	backend/test-dynamo-v3.js
+D	backend/test-upload-client.js
+D	backend/test-upload-server.js
+M	frontend/index.html
+M	frontend/package.json
+M	frontend/src/App.jsx
+M	frontend/src/components/ProtectedRoute.jsx
+M	frontend/src/context/AuthContext.jsx
+M	frontend/src/index.css
+M	frontend/src/pages/SellerDashboard.jsx
+M	frontend/src/services/api.js
+Switched to a new branch 'secondreview'
+ 
+Adding files 

@@ -22,7 +22,7 @@
     --glass-shadow: rgba(0, 0, 0, 0.6);
 
     /* Text Colors */
-    --text-primary: #FFFFFF;
+    --text-primary: #F8F9FA;
     --text-secondary: #B8C1EC;
     --text-muted: #8A90B2;
     --text-placeholder: #7C84B8;
@@ -298,6 +298,10 @@
   .animate-slide-up {
     animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
+
+  .animate-modal-up {
+    animation: modalUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
 }
 
 /* ============================================
@@ -316,12 +320,22 @@
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
+  }
+}
+
+@keyframes modalUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }
 

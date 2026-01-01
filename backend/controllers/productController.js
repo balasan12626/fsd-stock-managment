@@ -1,10 +1,11 @@
 const { v4: uuidv4 } = require('uuid');
 const { dynamoDB } = require('../config/awsConfig');
 const { PutCommand, UpdateCommand, DeleteCommand, ScanCommand, GetCommand } = require('@aws-sdk/lib-dynamodb');
+const { logTransaction } = require('./transactionsController');
 
 const addProduct = async (req, res) => {
     try {
-        const { title, description, price, quantity, expiryDate } = req.body;
+        const { title, description, price, quantity, soldQuantity, category, expiryDate } = req.body;
         const sellerId = req.seller.sellerId;
         const imageUrls = req.files ? req.files.map(file => file.location) : [];
 
@@ -28,8 +29,10 @@ const addProduct = async (req, res) => {
                 productId,
                 title,
                 description,
+                category: category || 'Unordered',
                 price: parseFloat(price),
                 quantity: parseInt(quantity),
+                soldQuantity: parseInt(soldQuantity) || 0,
                 expiryDate,
                 imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
                 createdAt: new Date().toISOString()
@@ -37,6 +40,16 @@ const addProduct = async (req, res) => {
         };
 
         await dynamoDB.send(new PutCommand(params));
+
+        // Log transaction
+        await logTransaction({
+            sellerId,
+            productId,
+            type: 'initial_stock',
+            quantity: parseInt(quantity),
+            reason: 'Initial product deployment'
+        });
+
         res.status(201).json({ message: 'Product added successfully', productId });
     } catch (error) {
         console.error('Add Product Error:', error);
@@ -46,7 +59,7 @@ const addProduct = async (req, res) => {
 
 const updateProduct = async (req, res) => {
     try {
-        const { productId, title, description, price, quantity, expiryDate } = req.body;
+        const { productId, title, description, price, quantity, soldQuantity, category, expiryDate } = req.body;
         const sellerId = req.seller.sellerId;
 
         if (!productId) {
@@ -56,13 +69,15 @@ const updateProduct = async (req, res) => {
         const params = {
             TableName: 'Products',
             Key: { productId },
-            UpdateExpression: 'set #t = :t, #d = :d, #p = :p, #q = :q, #e = :e',
+            UpdateExpression: 'set #t = :t, #d = :d, #p = :p, #q = :q, #sq = :sq, #c = :c, #e = :e',
             ConditionExpression: 'sellerId = :sid',
             ExpressionAttributeNames: {
                 '#t': 'title',
                 '#d': 'description',
                 '#p': 'price',
                 '#q': 'quantity',
+                '#sq': 'soldQuantity',
+                '#c': 'category',
                 '#e': 'expiryDate'
             },
             ExpressionAttributeValues: {
@@ -70,6 +85,8 @@ const updateProduct = async (req, res) => {
                 ':d': description || '',
                 ':p': parseFloat(price) || 0,
                 ':q': parseInt(quantity) || 0,
+                ':sq': parseInt(soldQuantity) || 0,
+                ':c': category || 'Unordered',
                 ':e': expiryDate || '',
                 ':sid': sellerId
             },
@@ -78,6 +95,16 @@ const updateProduct = async (req, res) => {
 
         try {
             await dynamoDB.send(new UpdateCommand(params));
+
+            // Log transaction
+            await logTransaction({
+                sellerId,
+                productId,
+                type: 'update',
+                quantity: parseInt(quantity),
+                reason: 'Product core configuration update'
+            });
+
             res.json({ message: 'Success: Product unit re-configured and deployed.' });
         } catch (dbError) {
             if (dbError.name === 'ValidationException') {
@@ -118,6 +145,16 @@ const deleteProduct = async (req, res) => {
             };
             await dynamoDB.send(new DeleteCommand(params));
             console.log(`[SUCCESS] Unit ${productId} disposed via simple key.`);
+
+            // Log transaction
+            await logTransaction({
+                sellerId,
+                productId,
+                type: 'remove',
+                quantity: 0,
+                reason: 'Product unit permanent disposal (Decommissioned)'
+            });
+
             return res.json({ message: 'Success: Product unit disposed.' });
         } catch (dbError) {
             // If simple key fails, try composite key
@@ -129,6 +166,16 @@ const deleteProduct = async (req, res) => {
                 };
                 await dynamoDB.send(new DeleteCommand(compositeParams));
                 console.log(`[SUCCESS] Unit ${productId} disposed via composite key.`);
+
+                // Log transaction
+                await logTransaction({
+                    sellerId,
+                    productId,
+                    type: 'remove',
+                    quantity: 0,
+                    reason: 'Product unit permanent disposal (Decommissioned - Composite)'
+                });
+
                 return res.json({ message: 'Success: Product unit disposed (Composite Key).' });
             }
             throw dbError;
@@ -152,7 +199,11 @@ const getSellerProducts = async (req, res) => {
         };
 
         const result = await dynamoDB.send(new ScanCommand(params));
-        res.json(result.Items);
+        const items = result.Items.map(p => ({
+            ...p,
+            isLowStock: (parseInt(p.quantity) < 10)
+        }));
+        res.json(items);
     } catch (error) {
         console.error('Get Seller Products Error:', error);
         res.status(500).json({ message: 'Communication Link Error', error: error.message });

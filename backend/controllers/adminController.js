@@ -62,7 +62,7 @@ const registerAdmin = async (req, res) => {
         const adminId = uuidv4();
 
         // Super admin email
-        const SUPER_ADMIN_EMAIL = 'sbb502122005@gmail.com';
+        const SUPER_ADMIN_EMAIL = 'balasan2626@gmail.com';
         const isAdminApproved = email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase() ? 'approved' : 'pending';
 
         // Create admin record
@@ -102,7 +102,7 @@ const registerAdmin = async (req, res) => {
             success: true,
             message: isApproved
                 ? 'Super Admin registered and approved successfully'
-                : 'Admin registration submitted successfully. Your account is pending approval from the super admin (sbb502122005@gmail.com).',
+                : 'Admin registration submitted successfully. Your account is pending approval from the super admin (balasan2626@gmail.com).',
             token,
             admin: adminData,
             status: adminData.status
@@ -140,26 +140,30 @@ const loginAdmin = async (req, res) => {
             });
         }
 
-        // Find admin by email
+        // Check if admin exists
         const params = {
             TableName: 'Admins',
             FilterExpression: 'email = :email',
-            ExpressionAttributeValues: { ':email': email }
+            ExpressionAttributeValues: { ':email': email.toLowerCase() }
         };
 
         const result = await dynamoDB.send(new ScanCommand(params));
-        const admin = result.Items ? result.Items[0] : null;
+        const admin = result.Items?.[0];
 
-        // Check if admin exists
         if (!admin) {
-            return res.status(401).json({
-                success: false,
-                message: 'Invalid email or password'
-            });
+            // Check if they are trying the old super admin email and guide them
+            const LEGACY_EMAILS = ['sbb502122005@gmail.com', 'sbb202122005@gmail.com'];
+            if (LEGACY_EMAILS.includes(email.toLowerCase())) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Legacy credentials detected. Please use the verified production email: balasan2626@gmail.com'
+                });
+            }
+            return res.status(401).json({ success: false, message: 'Identity not found in administrative records.' });
         }
 
         // Check approval status
-        const SUPER_ADMIN_EMAIL = 'sbb502122005@gmail.com';
+        const SUPER_ADMIN_EMAIL = 'balasan2626@gmail.com';
         if (admin.status !== 'approved') {
             // Failsafe: Auto-approve super admin on first login attempt if they used the correct email
             if (admin.email.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase()) {
@@ -173,7 +177,7 @@ const loginAdmin = async (req, res) => {
             } else {
                 return res.status(403).json({
                     success: false,
-                    message: `Your admin account is currently ${admin.status || 'pending'}. Please contact the super admin (sbb502122005@gmail.com) for approval.`
+                    message: `Your admin account is currently ${admin.status || 'pending'}. Please contact the super admin (balasan2626@gmail.com) for approval.`
                 });
             }
         }
@@ -206,10 +210,18 @@ const loginAdmin = async (req, res) => {
             admin: adminData
         });
     } catch (error) {
-        console.error('Admin login error:', error);
+        console.error('❌ CRITICAL ADMIN LOGIN ERROR:', error);
+
+        let message = 'Uplink Failure: System core unreachable.';
+        if (error.name === 'ResourceNotFoundException') {
+            message = 'Database Error: "Admins" table decommissioned. Initialize setup.';
+        } else if (error.name === 'ValidationException') {
+            message = 'Security Protocol Failure: Schema mismatch detected.';
+        }
+
         res.status(500).json({
             success: false,
-            message: 'Server error during admin login',
+            message: message,
             error: error.message
         });
     }
@@ -242,7 +254,7 @@ const getAdminProfile = async (req, res) => {
  */
 const getAllAdmins = async (req, res) => {
     try {
-        const SUPER_ADMIN_EMAIL = 'sbb502122005@gmail.com';
+        const SUPER_ADMIN_EMAIL = 'balasan2626@gmail.com';
 
         // Safety check - though middleware should handle this
         if (req.admin.email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
@@ -285,7 +297,7 @@ const updateAdminStatus = async (req, res) => {
     try {
         const { adminId } = req.params;
         const { status } = req.body; // 'approved' or 'declined'
-        const SUPER_ADMIN_EMAIL = 'sbb502122005@gmail.com';
+        const SUPER_ADMIN_EMAIL = 'balasan2626@gmail.com';
 
         if (req.admin.email.toLowerCase() !== SUPER_ADMIN_EMAIL.toLowerCase()) {
             return res.status(403).json({

@@ -3,373 +3,183 @@
 @tailwind utilities;
 
 @layer base {
-
-  /* ============================================
-     DARK THEME (Default)
-     ============================================ */
   :root[data-theme='dark'] {
-    /* Background Gradients */
-    --bg-gradient-start: #0A0F1F;
-    --bg-gradient-mid: #141A3A;
-    --bg-gradient-end: #2B155E;
     --bg-primary: #020617;
     --bg-secondary: #0f172a;
     --bg-tertiary: #1e293b;
-
-    /* Glass Effect */
-    --glass-bg: rgba(255, 255, 255, 0.06);
-    --glass-border: rgba(255, 255, 255, 0.12);
-    --glass-shadow: rgba(0, 0, 0, 0.6);
-
-    /* Text Colors */
-    --text-primary: #F8F9FA;
-    --text-secondary: #B8C1EC;
-    --text-muted: #8A90B2;
-    --text-placeholder: #7C84B8;
-
-    /* Accent Colors */
-    --accent-primary: #4F7CFF;
-    --accent-secondary: #8F3FFF;
+    --bg-card: rgba(15, 23, 42, 0.7);
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.08);
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --input-bg: rgba(15, 23, 42, 0.5);
+    --input-border: rgba(255, 255, 255, 0.1);
+    --input-focus-glow: rgba(59, 130, 246, 0.2);
+    --accent-primary: 59 130 246;
+    --accent-secondary: 139 92 246;
     --accent-cyan: #06b6d4;
     --accent-magenta: #d946ef;
-
-    /* Input Fields */
-    --input-bg: rgba(255, 255, 255, 0.08);
-    --input-border: rgba(255, 255, 255, 0.15);
-    --input-focus-border: #4F7CFF;
-    --input-focus-glow: rgba(79, 124, 255, 0.5);
-
-    /* Cards */
-    --card-bg: rgba(255, 255, 255, 0.06);
-    --card-border: rgba(255, 255, 255, 0.12);
-    --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-
-    /* Border */
-    --border-color: rgba(255, 255, 255, 0.05);
-
-    /* Grid Pattern */
+    --accent-success: 16 185 129;
+    --accent-warning: 245 158 11;
+    --accent-danger: 239 68 68;
+    --bg-gradient-start: #020617;
+    --bg-gradient-mid: #0f172a;
+    --bg-gradient-end: #020617;
+    --shadow-main: 0 10px 40px -10px rgba(0, 0, 0, 0.5);
     --grid-color: rgba(255, 255, 255, 0.03);
   }
 
-  /* ============================================
-     LIGHT THEME
-     ============================================ */
   :root[data-theme='light'] {
-    /* Background Gradients */
-    --bg-gradient-start: #F6F8FF;
-    --bg-gradient-mid: #EEF1FF;
-    --bg-gradient-end: #FFFFFF;
-    --bg-primary: #FFFFFF;
-    --bg-secondary: #F6F8FF;
-    --bg-tertiary: #EEF1FF;
-
-    /* Glass Effect */
-    --glass-bg: #FFFFFF;
-    --glass-border: #E6E9F5;
-    --glass-shadow: rgba(0, 0, 0, 0.08);
-
-    /* Text Colors */
-    --text-primary: #0A0F1F;
-    --text-secondary: #3B3F5C;
-    --text-muted: #7A7F9A;
-    --text-placeholder: #9AA0C3;
-
-    /* Accent Colors */
-    --accent-primary: #4F7CFF;
-    --accent-secondary: #8F3FFF;
-    --accent-cyan: #0ea5e9;
+    --bg-primary: #f8fafc;
+    --bg-secondary: #f1f5f9;
+    --bg-tertiary: #e2e8f0;
+    --bg-card: rgba(255, 255, 255, 0.8);
+    --glass-bg: rgba(0, 0, 0, 0.02);
+    --glass-border: rgba(0, 0, 0, 0.05);
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --border-color: rgba(0, 0, 0, 0.05);
+    --input-bg: #ffffff;
+    --input-border: rgba(0, 0, 0, 0.1);
+    --input-focus-glow: rgba(37, 99, 235, 0.1);
+    --accent-primary: 37 99 235;
+    --accent-secondary: 124 58 237;
+    --accent-cyan: #0891b2;
     --accent-magenta: #c026d3;
-
-    /* Input Fields */
-    --input-bg: #F6F8FF;
-    --input-border: #DDE2F5;
-    --input-focus-border: #4F7CFF;
-    --input-focus-glow: rgba(79, 124, 255, 0.25);
-
-    /* Cards */
-    --card-bg: #FFFFFF;
-    --card-border: #E6E9F5;
-    --card-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
-
-    /* Border */
-    --border-color: #E6E9F5;
-
-    /* Grid Pattern */
+    --accent-success: 5 150 105;
+    --accent-warning: 217 119 6;
+    --accent-danger: 220 38 38;
+    --bg-gradient-start: #f8fafc;
+    --bg-gradient-mid: #f1f5f9;
+    --bg-gradient-end: #f8fafc;
+    --shadow-main: 0 10px 30px -10px rgba(0, 0, 0, 0.1);
     --grid-color: rgba(0, 0, 0, 0.02);
   }
 
   * {
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    @apply transition-colors duration-300;
   }
 
   body {
-    margin: 0;
-    font-family: 'Inter', 'Poppins', 'SF Pro', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-mid), var(--bg-gradient-end));
+    @apply m-0 min-h-screen bg-primary text-primary overflow-x-hidden;
+    font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply backdrop-blur-xl border-glass border bg-glass-bg;
+  }
+
+  .premium-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-main);
+    @apply rounded-3xl transition-all duration-300;
+  }
+
+  .premium-card:hover {
+    @apply transform -translate-y-1;
+    border-color: rgb(var(--accent-primary));
+    box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.3);
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-200 cursor-pointer;
+    @apply text-secondary hover:text-primary hover:bg-white/5;
+  }
+
+  .sidebar-item.active {
+    @apply bg-accent-primary/10 text-accent-primary border border-accent-primary/20;
+    box-shadow: 0 0 20px -5px rgba(var(--accent-primary), 0.3);
+  }
+
+  .btn-primary {
+    @apply px-6 py-3 rounded-2xl font-semibold transition-all duration-300;
+    @apply bg-gradient-to-r from-accent-primary to-accent-secondary text-white;
+    @apply shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40 hover:-translate-y-0.5 active:scale-95;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 rounded-2xl font-semibold transition-all duration-300;
+    @apply bg-white/5 border border-glass text-primary;
+    @apply hover:bg-white/10 hover:border-white/20 active:scale-95;
+  }
+
+  .input-field {
+    @apply w-full px-5 py-3 rounded-2xl bg-white/5 border border-glass outline-none transition-all duration-300;
+    @apply focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/10;
+  }
+
+  .login-input {
+    @apply w-full px-5 py-4 rounded-2xl outline-none transition-all duration-300 border;
+    background: var(--input-bg);
+    border-color: var(--input-border);
     color: var(--text-primary);
-    overflow-x: hidden;
-    min-height: 100vh;
   }
 
-  /* Remove spin buttons from number inputs */
-  input[type='number']::-webkit-outer-spin-button,
-  input[type='number']::-webkit-inner-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-
-  input[type='number'] {
-    -moz-appearance: textfield;
+  .login-input:focus {
+    border-color: rgb(var(--accent-primary));
+    box-shadow: 0 0 20px var(--input-focus-glow);
   }
 }
 
 @layer utilities {
-
-  /* ============================================
-     BACKGROUND PATTERNS
-     ============================================ */
   .cosmic-grid {
-    background-color: var(--bg-primary);
     background-image:
       linear-gradient(var(--grid-color) 1px, transparent 1px),
       linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-    background-size: 40px 40px;
+    background-size: 50px 50px;
   }
 
-  /* ============================================
-     GLASS EFFECTS
-     ============================================ */
-  .glass-effect {
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
+  .animate-gradient {
+    background-size: 200% auto;
+    animation: gradient 3s linear infinite;
   }
 
-  .glass-card {
-    background: var(--card-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--card-border);
-    box-shadow: var(--card-shadow);
-  }
+  @keyframes gradient {
+    0% {
+      background-position: 0% center;
+    }
 
-  /* ============================================
-     THEME TOGGLE BUTTON
-     ============================================ */
-  .theme-toggle-btn {
-    padding: 0.75rem;
-    border-radius: 1rem;
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .theme-toggle-btn:hover {
-    background: var(--input-bg);
-    color: var(--accent-primary);
-    transform: scale(1.05);
-    box-shadow: 0 0 20px var(--input-focus-glow);
-  }
-
-  .theme-toggle-icon {
-    transition: transform 0.3s ease;
-  }
-
-  .theme-toggle-btn:hover .theme-toggle-icon {
-    transform: rotate(20deg);
-  }
-
-  /* ============================================
-     GAMING STYLE OCTAGON SHAPES
-     ============================================ */
-  .neon-octagon-border {
-    position: relative;
-    padding: 2px;
-    clip-path: polygon(20px 0, calc(100% - 20px) 0, 100% 200px, 100% calc(100% - 20px), calc(100% - 20px) 100%, 20px 100%, 0 calc(100% - 20px), 0 20px);
-    background: linear-gradient(135deg, var(--accent-cyan) 0%, rgba(6, 182, 212, 0) 40%, rgba(217, 70, 239, 0) 60%, var(--accent-magenta) 100%);
-  }
-
-  .octagon-card {
-    clip-path: polygon(15px 0, calc(100% - 15px) 0, 100% 15px, 100% calc(100% - 15px), calc(100% - 15px) 100%, 15px 100%, 0 calc(100% - 15px), 0 15px);
-    border: 2px solid transparent;
-    background: linear-gradient(var(--bg-secondary), var(--bg-secondary)) padding-box,
-      linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta)) border-box;
-  }
-
-  /* ============================================
-     GLOW EFFECTS
-     ============================================ */
-  .glow-cyan {
-    box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
-  }
-
-  .glow-magenta {
-    box-shadow: 0 0 20px rgba(217, 70, 239, 0.4);
-  }
-
-  /* ============================================
-     NAVIGATION
-     ============================================ */
-  .nav-link-active {
-    position: relative;
-    color: var(--text-primary) !important;
-  }
-
-  .nav-link-active::after {
-    content: '';
-    position: absolute;
-    bottom: -8px;
-    left: 0;
-    width: 100%;
-    height: 2px;
-    background: var(--accent-cyan);
-    box-shadow: 0 0 10px var(--accent-cyan);
-  }
-
-  /* ============================================
-     BUTTONS
-     ============================================ */
-  .pill-button {
-    background: linear-gradient(to right, var(--bg-primary), var(--bg-tertiary));
-    border: 2px solid var(--accent-secondary);
-    border-radius: 9999px;
-    padding: 4px 24px;
-    box-shadow: 0 0 15px var(--input-focus-glow);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--text-primary);
-    font-weight: 600;
-    transition: all 0.3s ease;
-  }
-
-  .pill-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 0 25px var(--input-focus-glow);
-  }
-
-  /* ============================================
-     INPUTS
-     ============================================ */
-  .login-input {
-    background: var(--input-bg);
-    border: 1px solid var(--input-border);
-    color: var(--text-primary);
-    transition: all 0.3s ease;
-  }
-
-  .login-input::placeholder {
-    color: var(--text-placeholder);
-  }
-
-  .login-input:focus {
-    border-color: var(--input-focus-border);
-    box-shadow: 0 0 15px var(--input-focus-glow);
-    background: var(--input-bg);
-    outline: none;
-  }
-
-  /* ============================================
-     ANIMATIONS
-     ============================================ */
-  .animate-shimmer {
-    background: linear-gradient(90deg,
-        transparent,
-        rgba(255, 255, 255, 0.1),
-        transparent);
-    background-size: 200% 100%;
-    animation: shimmer 2s infinite;
+    100% {
+      background-position: 200% center;
+    }
   }
 
   .animate-pulse-slow {
-    animation: pulse-slow 8s infinite ease-in-out;
+    animation: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
+  @keyframes pulse {
+
+    0%,
+    100% {
+      opacity: 1;
+    }
+
+    50% {
+      opacity: 0.5;
+    }
   }
 
-  .animate-slide-up {
-    animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 
-  .animate-modal-up {
-    animation: modalUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  }
-}
-
-/* ============================================
-   KEYFRAME ANIMATIONS
-   ============================================ */
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-
-  100% {
-    background-position: 200% 0;
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes modalUp {
-  from {
-    opacity: 0;
-    transform: translateY(40px) scale(0.95);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse-slow {
-
-  0%,
-  100% {
-    opacity: 0.1;
-    transform: scale(1);
-  }
-
-  50% {
-    opacity: 0.2;
-    transform: scale(1.1);
-  }
-}
-
-/* ============================================
-   SCROLLBAR STYLES
-   ============================================ */
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -379,9 +189,8 @@
 ::-webkit-scrollbar-thumb {
   background: var(--bg-tertiary);
   border-radius: 10px;
-  border: 2px solid var(--bg-primary);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-cyan);
+  background: rgb(var(--accent-primary));
 }

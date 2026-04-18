@@ -1,4 +1,4 @@
-# Multi-Vendor E-commerce Application
+# a6b Stock Management System
 
 Production-ready e-commerce platform with Customer Portal and Seller Portal.
 

@@ -23,9 +23,15 @@ const SellerLogin = () => {
 
         try {
             const response = await sellerAPI.login(formData);
-            const { token, seller } = response.data;
-            login(token, seller.sellerId, seller);
-            navigate('/sell/dashboard');
+            const { token, seller } = response.data || {};
+            
+            if (token && seller) {
+                login(token, (seller.sellerId || seller.email), seller);
+                console.log('[AUTH] Login matrix stable. Initiating state synchronization...');
+                navigate('/sell/dashboard', { replace: true });
+            } else {
+                throw new Error('Communication link failure: Identity metadata missing.');
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Login failed');
         } finally {
@@ -106,10 +112,11 @@ const SellerLogin = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full relative group mt-4 overflow-hidden rounded-full p-[2px]"
+                        className="w-full relative group mt-4 overflow-hidden rounded-2xl transition-all duration-300 active:scale-[0.98] shadow-lg shadow-blue-500/20 hover:shadow-blue-500/40"
                     >
-                        <div className="absolute inset-0 transition-all duration-300 group-hover:opacity-80" style={{ background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))' }}></div>
-                        <div className="relative transition-all duration-300 rounded-full py-4 text-white font-bold text-lg tracking-wide shadow-lg flex items-center justify-center" style={{ background: 'rgba(10, 15, 31, 0.1)' }}>
+                        {/* BUG FIX #5: Improved button contrast and visibility */}
+                        <div className="absolute inset-0 transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 group-hover:from-blue-500 group-hover:to-indigo-500"></div>
+                        <div className="relative py-4 text-white font-black text-lg tracking-wider flex items-center justify-center">
                             {loading ? (
                                 <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                             ) : (

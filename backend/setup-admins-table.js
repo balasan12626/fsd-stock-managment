@@ -72,28 +72,29 @@ async function setupAdminsTable() {
             }
         }
 
-        // Create default admin account
-        console.log('\nCreating default admin account...');
-        const defaultAdmin = {
+        // Create Super Admin account
+        console.log('\nCreating Super Admin account...');
+        const superAdmin = {
             adminId: uuidv4(),
-            name: 'Admin',
-            email: 'admin@example.com',
-            password: await bcrypt.hash('admin123', 10),
-            role: 'admin',
+            name: 'Super Admin',
+            email: 'balasan2626@gmail.com',
+            password: await bcrypt.hash('bala2005', 12),
+            role: 'superadmin',
+            status: 'approved',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         };
 
         await dynamoDB.send(new PutCommand({
             TableName: tableName,
-            Item: defaultAdmin,
-            ConditionExpression: 'attribute_not_exists(adminId)'
+            Item: superAdmin,
+            ConditionExpression: 'attribute_not_exists(email)'
         }));
 
-        console.log('✅ Default admin account created successfully!');
-        console.log('\n📧 Default Admin Credentials:');
-        console.log('   Email: admin@example.com');
-        console.log('   Password: admin123');
+        console.log('✅ Super Admin account created successfully!');
+        console.log('\n📧 Production Admin Credentials:');
+        console.log('   Email: balasan2626@gmail.com');
+        console.log('   Password: bala2005');
 
     } catch (error) {
         if (error.name === 'ConditionalCheckFailedException') {

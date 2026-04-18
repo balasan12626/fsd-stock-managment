@@ -22,7 +22,6 @@ const addProduct = async (req, res) => {
         };
 
         const params = {
-            TableNames: 'Products',
             TableName: 'Products',
             Item: removeEmptyStrings({
                 sellerId,
@@ -66,11 +65,9 @@ const updateProduct = async (req, res) => {
             return res.status(400).json({ message: 'Product ID is required for re-deployment' });
         }
 
-        const params = {
+        const commonUpdateParams = {
             TableName: 'Products',
-            Key: { productId },
             UpdateExpression: 'set #t = :t, #d = :d, #p = :p, #q = :q, #sq = :sq, #c = :c, #e = :e',
-            ConditionExpression: 'sellerId = :sid',
             ExpressionAttributeNames: {
                 '#t': 'title',
                 '#d': 'description',
@@ -86,15 +83,21 @@ const updateProduct = async (req, res) => {
                 ':p': parseFloat(price) || 0,
                 ':q': parseInt(quantity) || 0,
                 ':sq': parseInt(soldQuantity) || 0,
-                ':c': category || 'Unordered',
+                ':c': category || 'Processors',
                 ':e': expiryDate || '',
                 ':sid': sellerId
             },
             ReturnValues: 'UPDATED_NEW'
         };
 
+        // Attempt 1: Simple Key (productId only)
         try {
-            await dynamoDB.send(new UpdateCommand(params));
+            console.log(`[UPDATE] Attempting update for unit ${productId} using simple key...`);
+            await dynamoDB.send(new UpdateCommand({
+                ...commonUpdateParams,
+                Key: { productId },
+                ConditionExpression: 'sellerId = :sid',
+            }));
 
             // Log transaction
             await logTransaction({
@@ -102,31 +105,53 @@ const updateProduct = async (req, res) => {
                 productId,
                 type: 'update',
                 quantity: parseInt(quantity),
-                reason: 'Product core configuration update'
+                reason: 'Product core configuration update (Simple Link)'
             });
 
-            res.json({ message: 'Success: Product unit re-configured and deployed.' });
+            return res.json({ message: 'Success: Product unit re-configured and deployed.' });
         } catch (dbError) {
-            if (dbError.name === 'ValidationException') {
-                await dynamoDB.send(new UpdateCommand({
-                    ...params,
-                    Key: { sellerId, productId },
-                    ConditionExpression: undefined
-                }));
-                res.json({ message: 'Success: Product unit re-configured (Composite Key Link).' });
-            } else {
-                throw dbError;
+            // Handle schema mismatch or wrong key
+            if (dbError.name === 'ValidationException' || dbError.message.includes('schema')) {
+                console.log(`[FALLBACK] Simple key failed, attempting update for unit ${productId} using composite key...`);
+
+                try {
+                    await dynamoDB.send(new UpdateCommand({
+                        ...commonUpdateParams,
+                        Key: { sellerId, productId }
+                        // No condition needed if sellerId is part of the Key
+                    }));
+
+                    await logTransaction({
+                        sellerId,
+                        productId,
+                        type: 'update',
+                        quantity: parseInt(quantity),
+                        reason: 'Product core configuration update (Composite Link)'
+                    });
+
+                    return res.json({ message: 'Success: Product unit re-configured (Composite Key Link).' });
+                } catch (compositeError) {
+                    console.error('❌ Composite Update Error:', compositeError);
+                    throw compositeError;
+                }
+            } else if (dbError.name === 'ConditionalCheckFailedException') {
+                return res.status(403).json({ message: 'Access Denied: Unit ownership verification failed.' });
             }
+            throw dbError;
         }
     } catch (error) {
         console.error('Update Controller Error:', error);
-        res.status(500).json({ message: 'Core System Error', error: error.message });
+        res.status(500).json({
+            message: 'Core System Error',
+            error: error.message,
+            hint: 'The provided key element does not match the schema'
+        });
     }
 };
 
 const deleteProduct = async (req, res) => {
     try {
-        const { productId } = req.params; // Using req.params for maximum reliability
+        const { productId } = req.params;
         const sellerId = req.seller.sellerId;
 
         if (!productId) {
@@ -157,26 +182,30 @@ const deleteProduct = async (req, res) => {
 
             return res.json({ message: 'Success: Product unit disposed.' });
         } catch (dbError) {
-            // If simple key fails, try composite key
-            if (dbError.name === 'ValidationException' || dbError.name === 'ResourceNotFoundException') {
-                console.log(`[FALLBACK] Retrying disposal of unit ${productId} with composite key for ${sellerId}`);
-                const compositeParams = {
-                    TableName: 'Products',
-                    Key: { sellerId, productId }
-                };
-                await dynamoDB.send(new DeleteCommand(compositeParams));
-                console.log(`[SUCCESS] Unit ${productId} disposed via composite key.`);
+            // Check for schema mismatch
+            if (dbError.name === 'ValidationException' || dbError.message.includes('schema') || dbError.name === 'ResourceNotFoundException') {
+                console.log(`[FALLBACK] Simple key failed, retrying disposal of unit ${productId} with composite key...`);
+                try {
+                    const compositeParams = {
+                        TableName: 'Products',
+                        Key: { sellerId, productId }
+                    };
+                    await dynamoDB.send(new DeleteCommand(compositeParams));
+                    console.log(`[SUCCESS] Unit ${productId} disposed via composite key.`);
 
-                // Log transaction
-                await logTransaction({
-                    sellerId,
-                    productId,
-                    type: 'remove',
-                    quantity: 0,
-                    reason: 'Product unit permanent disposal (Decommissioned - Composite)'
-                });
+                    await logTransaction({
+                        sellerId,
+                        productId,
+                        type: 'remove',
+                        quantity: 0,
+                        reason: 'Product unit permanent disposal (Decommissioned - Composite)'
+                    });
 
-                return res.json({ message: 'Success: Product unit disposed (Composite Key).' });
+                    return res.json({ message: 'Success: Product unit disposed (Composite Key).' });
+                } catch (compositeError) {
+                    console.error('❌ Composite Delete Error:', compositeError);
+                    throw compositeError;
+                }
             }
             throw dbError;
         }

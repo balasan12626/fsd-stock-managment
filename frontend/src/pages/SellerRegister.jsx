@@ -22,6 +22,19 @@ const SellerRegister = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
+    const validatePassword = (password) => {
+        const minLength = 8;
+        const hasUpperCase = /[A-Z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+        const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+        if (password.length < minLength) return 'Security requirement: Password < 8 characters.';
+        if (!hasUpperCase) return 'Security requirement: Missing uppercase unit.';
+        if (!hasNumber) return 'Security requirement: Missing numeric module.';
+        if (!hasSpecialChar) return 'Security requirement: Missing special character.';
+        return null;
+    };
+
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
@@ -57,6 +70,14 @@ const SellerRegister = () => {
         setError('');
         setLoading(true);
 
+        // BUG FIX #8: Password Complexity Validation
+        const pwdError = validatePassword(formData.password);
+        if (pwdError) {
+            setError(pwdError);
+            setLoading(false);
+            return;
+        }
+
         try {
             const data = new FormData();
             Object.keys(formData).forEach(key => data.append(key, formData[key]));
@@ -67,7 +88,7 @@ const SellerRegister = () => {
             login(token, seller.sellerId, seller);
             navigate('/sell/dashboard');
         } catch (err) {
-            const errorMessage = err.response?.data?.stack || err.response?.data?.error || err.response?.data?.message || 'Registration failed';
+            const errorMessage = err.response?.data?.stack || err.response?.data?.error || err.response?.data?.message || 'SYSTEM ERROR: Registration node failure';
             setError(errorMessage);
             console.error('Registration error details:', err.response?.data);
         } finally {
@@ -90,7 +111,7 @@ const SellerRegister = () => {
 
             <div className="relative glass-card rounded-3xl shadow-2xl p-8 w-full max-w-2xl animate-slide-up">
                 <div className="flex items-center justify-center mb-6">
-                    <div className="p-3 rounded-2xl shadow-lg" style={{ background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))', boxShadow: '0 0 20px var(--input-focus-glow)' }}>
+                    <div className="p-3 rounded-2xl shadow-lg" style={{ background: 'linear-gradient(90deg, rgb(var(--accent-primary)), rgb(var(--accent-secondary)))', boxShadow: '0 0 20px var(--input-focus-glow)' }}>
                         <Sparkles className="w-8 h-8 text-white" />
                     </div>
                 </div>
@@ -104,14 +125,14 @@ const SellerRegister = () => {
                 <div className="flex items-center justify-center mb-8">
                     <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2" style={{ color: step >= 1 ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 text-white shadow-lg" style={{ background: step >= 1 ? 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))' : 'var(--bg-tertiary)', color: step >= 1 ? 'white' : 'var(--text-muted)' }}>
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 text-white shadow-lg" style={{ background: step >= 1 ? 'linear-gradient(90deg, rgb(var(--accent-primary)), rgb(var(--accent-secondary)))' : 'var(--bg-tertiary)', color: step >= 1 ? 'white' : 'var(--text-muted)' }}>
                                 {step > 1 ? <Check className="w-5 h-5" /> : '1'}
                             </div>
                             <span className="hidden sm:block font-medium">Company Info</span>
                         </div>
-                        <div className="w-16 h-1 rounded-full transition-all duration-300" style={{ background: step >= 2 ? 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))' : 'var(--bg-tertiary)' }}></div>
+                        <div className="w-16 h-1 rounded-full transition-all duration-300" style={{ background: step >= 2 ? 'linear-gradient(90deg, rgb(var(--accent-primary)), rgb(var(--accent-secondary)))' : 'var(--bg-tertiary)' }}></div>
                         <div className="flex items-center gap-2" style={{ color: step >= 2 ? 'var(--accent-primary)' : 'var(--text-muted)' }}>
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 shadow-lg" style={{ background: step >= 2 ? 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))' : 'var(--bg-tertiary)', color: step >= 2 ? 'white' : 'var(--text-muted)' }}>
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 shadow-lg" style={{ background: step >= 2 ? 'linear-gradient(90deg, rgb(var(--accent-primary)), rgb(var(--accent-secondary)))' : 'var(--bg-tertiary)', color: step >= 2 ? 'white' : 'var(--text-muted)' }}>
                                 2
                             </div>
                             <span className="hidden sm:block font-medium">Account Details</span>
@@ -198,7 +219,7 @@ const SellerRegister = () => {
                                 type="button"
                                 onClick={handleNext}
                                 className="w-full text-white font-semibold py-4 rounded-xl transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
-                                style={{ background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))' }}
+                                style={{ background: 'linear-gradient(90deg, rgb(var(--accent-primary)), rgb(var(--accent-secondary)))' }}
                             >
                                 Next Step
                                 <ArrowRight className="w-5 h-5" />
@@ -281,7 +302,7 @@ const SellerRegister = () => {
                                     type="submit"
                                     disabled={loading}
                                     className="flex-1 text-white font-semibold py-4 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                                    style={{ background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-secondary))' }}
+                                    style={{ background: 'linear-gradient(90deg, rgb(var(--accent-primary)), rgb(var(--accent-secondary)))' }}
                                 >
                                     {loading ? (
                                         <span className="flex items-center justify-center gap-2">

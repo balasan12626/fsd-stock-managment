@@ -23,13 +23,29 @@ const tables = [
     {
         TableName: 'Products',
         KeySchema: [
-            { AttributeName: 'sellerId', KeyType: 'HASH' },
-            { AttributeName: 'productId', KeyType: 'RANGE' }
+            { AttributeName: 'productId', KeyType: 'HASH' }
         ],
         AttributeDefinitions: [
-            { AttributeName: 'sellerId', AttributeType: 'S' },
             { AttributeName: 'productId', AttributeType: 'S' }
         ],
+        ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
+    },
+    {
+        TableName: 'Customers',
+        KeySchema: [{ AttributeName: 'email', KeyType: 'HASH' }],
+        AttributeDefinitions: [{ AttributeName: 'email', AttributeType: 'S' }],
+        ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
+    },
+    {
+        TableName: 'Carts',
+        KeySchema: [{ AttributeName: 'email', KeyType: 'HASH' }],
+        AttributeDefinitions: [{ AttributeName: 'email', AttributeType: 'S' }],
+        ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
+    },
+    {
+        TableName: 'Orders',
+        KeySchema: [{ AttributeName: 'orderId', KeyType: 'HASH' }],
+        AttributeDefinitions: [{ AttributeName: 'orderId', AttributeType: 'S' }],
         ProvisionedThroughput: { ReadCapacityUnits: 5, WriteCapacityUnits: 5 }
     },
     {

@@ -72,7 +72,8 @@ const registerSeller = async (req, res) => {
         const token = generateToken({
             sellerId,
             email,
-            companyName
+            companyName,
+            role: 'seller'
         });
 
         // Return success response (excluding password)
@@ -139,7 +140,8 @@ const loginSeller = async (req, res) => {
         const token = generateToken({
             sellerId: seller.sellerId,
             email: seller.email,
-            companyName: seller.companyName
+            companyName: seller.companyName,
+            role: 'seller'
         });
 
         // Return success response (excluding password)
@@ -211,4 +213,46 @@ const refreshToken = async (req, res) => {
     }
 };
 
-module.exports = { registerSeller, loginSeller, getSellerProfile, refreshToken };
+/**
+ * Bulk add products from CSV manifest
+ */
+const bulkAddProducts = async (req, res) => {
+    try {
+        const { products } = req.body;
+        const sellerId = req.seller.sellerId;
+
+        if (!Array.isArray(products) || products.length === 0) {
+            return res.status(400).json({ success: false, message: 'Deployment manifest must be a non-empty array of hardware units.' });
+        }
+
+        const results = [];
+
+        for (const p of products) {
+            const productId = uuidv4();
+            const newProduct = {
+                sellerId,
+                productId,
+                title: p.title || 'Unknown Unit',
+                description: p.description || '',
+                category: p.category || 'General',
+                price: parseFloat(p.price) || 0,
+                quantity: parseInt(p.quantity) || 0,
+                soldQuantity: 0,
+                createdAt: new Date().toISOString()
+            };
+
+            await dynamoDB.send(new PutCommand({
+                TableName: 'Products',
+                Item: newProduct
+            }));
+            results.push(productId);
+        }
+
+        res.json({ success: true, count: results.length, ids: results });
+    } catch (error) {
+        console.error('Bulk Upload Error:', error);
+        res.status(500).json({ success: false, message: 'Bulk deployment failed.' });
+    }
+};
+
+module.exports = { registerSeller, loginSeller, getSellerProfile, refreshToken, bulkAddProducts };

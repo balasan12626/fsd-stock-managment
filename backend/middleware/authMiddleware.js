@@ -2,76 +2,66 @@ const { verifyToken } = require('../utils/tokenUtils');
 const { dynamoDB } = require('../config/awsConfig');
 const { GetCommand } = require('@aws-sdk/lib-dynamodb');
 
-const authMiddleware = async (req, res, next) => {
+/**
+ * Unified authentication middleware
+ * Verifies JWT and attaches decoded user to req.user
+ */
+const protect = async (req, res, next) => {
     try {
-        // Extract token from Authorization header
         const authHeader = req.header('Authorization');
 
-        if (!authHeader) {
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
             return res.status(401).json({
                 success: false,
-                message: 'Access denied. No authorization header provided.'
-            });
-        }
-
-        // Check if header starts with 'Bearer '
-        if (!authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({
-                success: false,
-                message: 'Invalid authorization format. Use: Bearer <token>'
+                message: 'Access denied. Valid authorization token required.'
             });
         }
 
         const token = authHeader.replace('Bearer ', '');
-
-        if (!token) {
-            return res.status(401).json({
-                success: false,
-                message: 'Access denied. No token provided.'
-            });
-        }
-
-        // Verify token using utility function
-        let decoded;
+        
         try {
-            decoded = verifyToken(token);
-        } catch (error) {
+            const decoded = verifyToken(token);
+            req.user = decoded;
+            
+            // For legacy compatibility where code expects req.sellerId or req.adminId
+            if (decoded.role === 'seller') {
+                req.sellerId = decoded.sellerId;
+            } else if (decoded.role === 'admin' || decoded.role === 'superadmin') {
+                req.adminId = decoded.adminId;
+            } else if (decoded.role === 'customer') {
+                req.customerId = decoded.customerId;
+            }
+
+            next();
+        } catch (err) {
             return res.status(401).json({
                 success: false,
-                message: error.message || 'Token verification failed'
+                message: 'Session expired or invalid. Please login again.',
+                error: err.message
             });
         }
-
-        // Fetch seller details from DynamoDB
-        const params = {
-            TableName: 'Sellers',
-            Key: { sellerId: decoded.sellerId }
-        };
-
-        const result = await dynamoDB.send(new GetCommand(params));
-
-        if (!result.Item) {
-            return res.status(401).json({
-                success: false,
-                message: 'Seller not found. Token may be invalid.'
-            });
-        }
-
-        // Attach seller info to request (excluding password)
-        const { password, ...sellerData } = result.Item;
-        req.seller = sellerData;
-        req.sellerId = decoded.sellerId;
-
-        next();
     } catch (error) {
-        console.error('Auth middleware error:', error);
-        res.status(500).json({
-            success: false,
-            message: `Auth Error: ${error.message}`,
-            error: error.message,
-            stack: error.stack
-        });
+        console.error('Protect middleware error:', error);
+        res.status(500).json({ success: false, message: 'Internal Authentication Error' });
     }
 };
 
-module.exports = authMiddleware;
+/**
+ * Role-based access control middleware
+ * usage: authorize('admin', 'seller')
+ */
+const authorize = (...roles) => {
+    return (req, res, next) => {
+        if (!req.user || !roles.includes(req.user.role)) {
+            console.warn(`[SECURITY] Unauthorized access attempt by ${req.user?.role || 'anonymous'} to ${req.originalUrl}`);
+            return res.status(403).json({
+                success: false,
+                message: `Access denied. ${roles.join(' or ').toUpperCase()} privileges required.`
+            });
+        }
+        next();
+    };
+};
+
+// Export both for flexible use
+module.exports = { protect, authorize };

@@ -67,3 +67,67 @@ M	frontend/src/services/api.js
 Switched to a new branch 'secondreview'
  
 Adding files 
+warning: in the working copy of 'backend/controllers/productController.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/server.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/setup-aws.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/index.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/App.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/components/ProtectedRoute.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/context/AuthContext.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/index.css', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/pages/SellerDashboard.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/services/api.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/controllers/adminController.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/controllers/adminDashboardController.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/controllers/analyticsController.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/controllers/transactionsController.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/middleware/adminMiddleware.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/run_install.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/setup-admins-table.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/pages/AdminDashboard.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/pages/AdminLogin.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/pages/AdminRegister.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/pages/SellerAnalytics.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/pages/SellerReports.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/pages/TransactionHistory.jsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/test_write.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'git_log.txt', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'test_write_root.txt', LF will be replaced by CRLF the next time Git touches it
+ 
+Committing 
+[secondreview 1ecdf61] Final submission for second review
+ 34 files changed, 3249 insertions(+), 215 deletions(-)
+ delete mode 100644 backend/check-table-schema.js
+ delete mode 100644 backend/check_version.js
+ create mode 100644 backend/controllers/adminController.js
+ create mode 100644 backend/controllers/adminDashboardController.js
+ create mode 100644 backend/controllers/analyticsController.js
+ create mode 100644 backend/controllers/transactionsController.js
+ create mode 100644 backend/middleware/adminMiddleware.js
+ create mode 100644 backend/run_install.js
+ create mode 100644 backend/setup-admins-table.js
+ delete mode 100644 backend/test-aws.js
+ delete mode 100644 backend/test-dynamo-v3.js
+ delete mode 100644 backend/test-upload-client.js
+ delete mode 100644 backend/test-upload-server.js
+ create mode 100644 frontend/src/pages/AdminDashboard.jsx
+ create mode 100644 frontend/src/pages/AdminLogin.jsx
+ create mode 100644 frontend/src/pages/AdminRegister.jsx
+ create mode 100644 frontend/src/pages/SellerAnalytics.jsx
+ create mode 100644 frontend/src/pages/SellerReports.jsx
+ create mode 100644 frontend/src/pages/TransactionHistory.jsx
+ create mode 100644 frontend/test_write.txt
+ create mode 100644 git_log.txt
+ create mode 100644 git_push.bat
+ create mode 100644 test_write_root.txt
+ 
+Pushing... 
+remote: 
+remote: Create a pull request for 'secondreview' on GitHub by visiting:        
+remote:      https://github.com/balasan12626/fsd-stock-managment/pull/new/secondreview        
+remote: 
+branch 'secondreview' set up to track 'origin/secondreview'.
+To https://github.com/balasan12626/fsd-stock-managment.git
+ * [new branch]      secondreview -> secondreview
+Done 

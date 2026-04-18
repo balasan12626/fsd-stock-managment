@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { productAPI } from '../services/api';
+import { productAPI, sellerAPI } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import ThemeToggle from '../components/ThemeToggle';
+import BulkUploadModal from '../components/BulkUploadModal';
 import {
     Plus,
+    Edit2,
     Edit3,
     Trash2,
     LogOut,
@@ -18,7 +20,10 @@ import {
     AlertTriangle,
     CheckCircle2,
     RefreshCw,
-    DollarSign
+    DollarSign,
+    BarChart3,
+    ShoppingBag,
+    UploadCloud
 } from 'lucide-react';
 
 const SellerDashboard = () => {
@@ -32,6 +37,20 @@ const SellerDashboard = () => {
     const [lowStockItems, setLowStockItems] = useState([]);
     const [recentTransactions, setRecentTransactions] = useState([]);
 
+    // Search and Filter State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState('All');
+    const [showBulkModal, setShowBulkModal] = useState(false);
+
+    const filteredProducts = products.filter(p => {
+        const matchesSearch = p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            p.description?.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesCategory = categoryFilter === 'All' || p.category === categoryFilter;
+        return matchesSearch && matchesCategory;
+    });
+
+    const categories = ['All', ...new Set(products.map(p => p.category).filter(Boolean))];
+
     useEffect(() => {
         fetchDashboardData();
     }, []);
@@ -42,19 +61,27 @@ const SellerDashboard = () => {
     };
 
     const fetchDashboardData = async () => {
+        setLoading(true);
+
+        // 1. Fetch Products (Critical)
         try {
-            setLoading(true);
-            const [productsRes, reportRes] = await Promise.all([
-                productAPI.getSellerProducts(),
-                sellerAPI.getReport()
-            ]);
+            const productsRes = await productAPI.getSellerProducts();
             setProducts(productsRes.data);
+        } catch (err) {
+            console.error('Product Fetch Error:', err);
+            showStatus('error', 'CONNECTION ERROR: Could not retrieve hardware inventory.');
+        }
+
+        // 2. Fetch Analytics (Non-Critical)
+        try {
+            const reportRes = await sellerAPI.getReport();
             if (reportRes.data.success) {
                 setLowStockItems(reportRes.data.report.lowStockItems);
                 setRecentTransactions(reportRes.data.report.recentTransactions);
             }
         } catch (err) {
-            showStatus('error', 'CORE LINK FAILURE: Failed to sync with dashboard data.');
+            console.error('Analytics Fetch Error:', err);
+            showStatus('warning', 'ANALYTICS OFFLINE: Report module temporarily unavailable.');
         } finally {
             setLoading(false);
         }
@@ -138,7 +165,7 @@ const SellerDashboard = () => {
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
                     {/* Profile Section */}
                     <div className="lg:col-span-1">
-                        <div className="glass-card rounded-[2rem] p-8 sticky top-32 shadow-2xl relative overflow-hidden group">
+                        <div className="glass-card rounded-[2rem] p-8 sticky top-32 shadow-2xl relative group">
                             <div className="absolute top-0 right-0 w-32 h-32 rounded-full blur-[60px]" style={{ background: 'radial-gradient(circle, var(--accent-cyan) 0%, transparent 70%)', opacity: 0.1 }}></div>
 
                             <div className="relative mb-6 flex justify-center">
@@ -158,6 +185,10 @@ const SellerDashboard = () => {
                                 <h2 className="text-xl font-black italic tracking-tighter uppercase mb-1" style={{ color: 'var(--text-primary)' }}>{seller?.companyName || 'CORE_TECH'}</h2>
                                 <p className="text-[8px] font-bold uppercase tracking-[0.3em] font-mono" style={{ color: 'var(--text-muted)' }}>UID: {seller?.sellerId?.slice(0, 10)}</p>
 
+                                <div className="flex items-center justify-center gap-2 mt-2">
+                                    <span className="px-2 py-1 rounded-md bg-cyan-500/20 text-cyan-400 text-[10px] font-bold uppercase">Verified Seller</span>
+                                </div>
+
                                 <div className="mt-6 pt-6 space-y-3" style={{ borderTop: '1px solid var(--border-color)' }}>
                                     <div className="flex justify-between items-center">
                                         <span className="text-[9px] uppercase font-black tracking-widest" style={{ color: 'var(--text-muted)' }}>Total Products</span>
@@ -172,23 +203,30 @@ const SellerDashboard = () => {
                             <div className="space-y-3">
                                 <button
                                     onClick={() => navigate('/sell/add-product')}
-                                    className="w-full py-4 text-white font-black tracking-[0.15em] text-[10px] uppercase rounded-xl transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 flex items-center justify-center gap-2"
-                                    style={{ background: 'linear-gradient(90deg, var(--accent-cyan), #0ea5e9)' }}
+                                    className="w-full py-4 rounded-xl font-black tracking-[0.15em] text-[10px] uppercase transition-all flex items-center justify-center gap-2 group/btn relative overflow-hidden"
+                                    style={{ background: 'linear-gradient(90deg, var(--accent-cyan), var(--accent-primary))', color: 'white' }}
                                 >
                                     <Plus className="w-4 h-4" />
-                                    New Product
+                                    SYNC NEW HARDWARE
+                                </button>
+                                <button
+                                    onClick={() => setShowBulkModal(true)}
+                                    className="w-full py-4 rounded-xl font-black tracking-[0.15em] text-[10px] uppercase transition-all flex items-center justify-center gap-2 border border-accent-primary/30 hover:bg-accent-primary/10 text-accent-primary"
+                                >
+                                    <UploadCloud className="w-4 h-4" />
+                                    MANIFEST UPLOAD
                                 </button>
                                 <button
                                     onClick={() => navigate('/sell/reports')}
-                                    className="w-full py-4 rounded-xl font-black tracking-[0.15em] text-[10px] uppercase transition-all flex items-center justify-center gap-2"
-                                    style={{ background: 'var(--accent-magenta)', border: '1px solid var(--border-color)', color: 'white' }}
+                                    className="w-full py-4 rounded-xl font-black tracking-[0.15em] text-[10px] uppercase transition-all flex items-center justify-center gap-2 animate-pulse"
+                                    style={{ background: 'var(--accent-magenta)', border: '1px solid var(--border-color)', color: 'white', boxShadow: '0 0 15px rgba(217, 70, 239, 0.3)' }}
                                 >
                                     <BarChart3 className="w-4 h-4" />
-                                    Performance Hub
+                                    PERFORMANCE HUB
                                 </button>
                                 <button
                                     onClick={() => navigate('/sell/transactions')}
-                                    className="w-full py-4 rounded-xl font-black tracking-[0.15em] text-[9px] uppercase transition-all flex items-center justify-center gap-2"
+                                    className="w-full py-4 rounded-xl font-black tracking-[0.15em] text-[10px] uppercase transition-all flex items-center justify-center gap-2"
                                     style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-secondary)' }}
                                 >
                                     <Activity className="w-4 h-4" />
@@ -196,7 +234,7 @@ const SellerDashboard = () => {
                                 </button>
                                 <button
                                     onClick={fetchDashboardData}
-                                    className="w-full py-4 rounded-xl font-black tracking-[0.15em] text-[9px] uppercase transition-all flex items-center justify-center gap-2"
+                                    className="w-full py-4 rounded-xl font-black tracking-[0.15em] text-[10px] uppercase transition-all flex items-center justify-center gap-2"
                                     style={{ background: 'var(--input-bg)', border: '1px solid var(--input-border)', color: 'var(--text-secondary)' }}
                                 >
                                     <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -206,151 +244,122 @@ const SellerDashboard = () => {
                         </div>
                     </div>
 
-                    {/* Main Content Area */}
-                    <div className="lg:col-span-3 space-y-10">
-                        {/* Low Stock Alerts */}
-                        {lowStockItems.length > 0 && (
-                            <div className="glass-card rounded-2xl p-6 border-l-4 border-amber-500 bg-amber-500/5 animate-pulse-slow">
-                                <div className="flex items-center gap-4">
-                                    <AlertTriangle className="w-6 h-6 text-amber-500" />
-                                    <div>
-                                        <h4 className="text-sm font-black uppercase tracking-widest text-white">Low Stock Warning</h4>
-                                        <p className="text-xs text-slate-400">{lowStockItems.length} units are operating below safety threshold.</p>
-                                    </div>
-                                </div>
+                    {/* Main Content: Inventory Manifest */}
+                    <div className="lg:col-span-3 space-y-8">
+                        {/* Search & Statistics Bar */}
+                        <div className="glass-card rounded-3xl p-6 flex flex-col md:flex-row gap-6 items-center justify-between border-glass">
+                            <div className="relative w-full md:w-96 group">
+                                <Plus className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary group-focus-within:text-accent-primary transition-colors" />
+                                <input
+                                    type="text"
+                                    placeholder="Search inventory matrix..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="w-full bg-primary/50 border border-glass rounded-2xl pl-12 pr-4 py-3 text-xs outline-none focus:border-accent-primary focus:ring-4 focus:ring-accent-primary/10 transition-all font-mono"
+                                />
                             </div>
-                        )}
 
-                        {/* Summary Block */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            {[
-                                { label: "Total Revenue", val: `$${totalValue.toLocaleString()}`, icon: DollarSign, color: "cyan" },
-                                { label: "Active Products", val: totalProducts.toString(), icon: Package, color: "magenta" },
-                                { label: "Total Orders", val: "18", icon: Activity, color: "purple" }
-                            ].map((stat, i) => (
-                                <div key={i} className="glass-card rounded-2xl p-6 relative overflow-hidden group hover:scale-[1.02] transition-all duration-300">
-                                    <div className="absolute top-0 right-0 w-24 h-24 rounded-full blur-[50px]" style={{
-                                        background: `radial-gradient(circle, var(--accent-${stat.color === 'cyan' ? 'cyan' : stat.color === 'magenta' ? 'magenta' : 'primary'}) 0%, transparent 70%)`,
-                                        opacity: 0.15
-                                    }}></div>
-
-                                    <div className="relative">
-                                        <div className="flex items-center justify-between mb-4">
-                                            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>{stat.label}</p>
-                                            <div className="p-2 rounded-lg" style={{ background: 'var(--input-bg)' }}>
-                                                <stat.icon className="w-4 h-4" style={{ color: stat.color === 'cyan' ? 'var(--accent-cyan)' : stat.color === 'magenta' ? 'var(--accent-magenta)' : 'var(--accent-primary)' }} />
-                                            </div>
-                                        </div>
-                                        <h3 className="text-3xl font-black tracking-tight" style={{ color: 'var(--text-primary)' }}>{stat.val}</h3>
-                                    </div>
-                                </div>
-                            ))}
+                            <div className="flex items-center gap-4 w-full md:w-auto overflow-x-auto pb-2 md:pb-0">
+                                {categories.map(cat => (
+                                    <button
+                                        key={cat}
+                                        onClick={() => setCategoryFilter(cat)}
+                                        className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all whitespace-nowrap ${categoryFilter === cat
+                                            ? 'bg-accent-primary text-white shadow-lg shadow-blue-500/20'
+                                            : 'bg-white/5 text-secondary hover:bg-white/10 border border-glass'
+                                            }`}
+                                    >
+                                        {cat}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
-                        {/* Inventory Grid */}
-                        <div className="space-y-8">
-                            <div className="flex items-center justify-between pb-4" style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2.5 rounded-xl" style={{ background: 'rgba(6, 182, 212, 0.1)' }}>
-                                        <Package className="w-5 h-5 text-cyan-400" />
-                                    </div>
-                                    <h3 className="text-sm font-black tracking-wider uppercase" style={{ color: 'var(--text-primary)' }}>Product Inventory</h3>
-                                </div>
-                            </div>
-
-                            {loading ? (
-                                <div className="flex flex-col items-center justify-center py-20 gap-6">
-                                    <div className="w-12 h-12 border-4 border-cyan-500 border-t-transparent rounded-full animate-spin glow-cyan"></div>
-                                    <p className="text-[10px] font-black text-cyan-500 uppercase tracking-[0.5em] animate-pulse">Syncing Linked Nodes...</p>
-                                </div>
-                            ) : products.length === 0 ? (
-                                <div className="glass-effect rounded-[3rem] p-32 text-center border-2 border-dashed border-white/5 group">
-                                    <Package className="w-24 h-24 text-slate-800 mx-auto mb-10 group-hover:scale-110 transition-transform" />
-                                    <h4 className="text-3xl font-black text-white italic uppercase tracking-tighter mb-4">Repository Null</h4>
-                                    <p className="text-slate-500 mb-12 max-w-sm mx-auto font-bold uppercase tracking-widest text-[11px] leading-relaxed">No hardware assets detected in the current sector. Initialize deployment protocol.</p>
-                                    <button
-                                        onClick={() => navigate('/sell/add-product')}
-                                        className="px-14 py-5 bg-white/5 border border-cyan-500/30 text-cyan-400 font-black uppercase tracking-[0.3em] text-[12px] rounded-2xl hover:bg-cyan-500 hover:text-slate-950 transition-all glow-cyan"
-                                    >
-                                        Execute Initialization
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-10">
-                                    {products.map((p) => (
-                                        <div
-                                            key={p.productId}
-                                            className="glass-effect rounded-[3rem] p-8 group hover:border-cyan-500/50 transition-all duration-700 relative flex flex-col bg-slate-900/40"
-                                        >
-                                            <div className="aspect-[4/3] bg-slate-950 rounded-[2rem] mb-8 overflow-hidden border border-white/5 relative group/img">
-                                                {p.imageUrls?.[0] ? (
-                                                    <img src={p.imageUrls[0]} alt={p.title} className="w-full h-full object-cover opacity-80 group-hover/img:scale-105 group-hover/img:opacity-100 transition-all duration-1000" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center bg-white/5"><Package className="w-16 h-16 text-slate-700" /></div>
-                                                )}
-                                                <div className="absolute top-4 left-4 px-4 py-1.5 bg-black/60 backdrop-blur-xl rounded-xl border border-white/10 text-[10px] font-black tracking-widest text-cyan-400 uppercase italic">
-                                                    ID: {p.productId.slice(0, 8)}
-                                                </div>
-                                            </div>
-
-                                            <div className="space-y-6 flex-grow flex flex-col">
-                                                <div className="flex-grow">
-                                                    <p className="text-[10px] font-black tracking-[0.4em] text-cyan-700 uppercase mb-3 italic">Hardware Class</p>
-                                                    <h4 className="text-2xl font-black text-white uppercase italic tracking-tighter line-clamp-2 leading-tight mb-8">{p.title}</h4>
-
-                                                    <div className="flex justify-between items-end bg-black/20 p-6 rounded-2xl border border-white/5">
-                                                        <div>
-                                                            <p className="text-[10px] font-black tracking-[0.2em] text-slate-600 uppercase mb-1">Credit Value</p>
-                                                            <p className="text-4xl font-black text-white tracking-tighter">
-                                                                <span className="text-cyan-500 font-light text-2xl">$</span>{parseFloat(p.price).toLocaleString()}
-                                                            </p>
-                                                        </div>
-                                                        <div className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 glow-cyan">
-                                                            <Target className="w-7 h-7" />
-                                                        </div>
+                        <div className="overflow-x-auto glass-card rounded-3xl border-glass">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="text-secondary uppercase text-[10px] tracking-widest font-black">
+                                        <th className="px-8 py-5">Product Details</th>
+                                        <th className="px-8 py-5">Category</th>
+                                        <th className="px-8 py-5">Price</th>
+                                        <th className="px-8 py-5">Stock</th>
+                                        <th className="px-8 py-5 text-right whitespace-nowrap">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-glass">
+                                    {filteredProducts.map((product) => (
+                                        <tr key={product.productId} className="group hover:bg-white/[0.02] transition-colors">
+                                            <td className="px-8 py-5">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="w-14 h-14 rounded-2xl overflow-hidden border border-glass bg-primary p-2">
+                                                        <img
+                                                            src={Array.isArray(product.images) ? product.images[0] : product.imageUrl || 'https://via.placeholder.com/150'}
+                                                            alt={product.title}
+                                                            className="w-full h-full object-cover rounded-lg group-hover:scale-110 transition-transform duration-500"
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-primary group-hover:text-accent-primary transition-colors">{product.title}</p>
+                                                        <p className="text-xs text-secondary line-clamp-1">{product.description}</p>
                                                     </div>
                                                 </div>
-
-                                                <div className="pt-8 border-t border-white/5 space-y-8">
-                                                    <div className="flex justify-between items-center text-[10px] font-black tracking-[0.3em] text-slate-500 uppercase italic">
-                                                        <span>Loadout: {p.quantity} Units</span>
-                                                        <span className="flex items-center gap-2">
-                                                            {p.isLowStock ? (
-                                                                <>
-                                                                    <div className="w-2 h-2 rounded-full bg-amber-500 animate-ping"></div>
-                                                                    <span className="text-amber-500">LOW STOCK</span>
-                                                                </>
-                                                            ) : (
-                                                                <>
-                                                                    <div className="w-2 h-2 rounded-full bg-cyan-500 glow-cyan"></div>
-                                                                    <span>SYNCHRONIZED</span>
-                                                                </>
-                                                            )}
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <span className="px-3 py-1.5 rounded-xl bg-white/5 border border-glass text-xs font-bold text-secondary">
+                                                    {product.category || 'General'}
+                                                </span>
+                                            </td>
+                                            <td className="px-8 py-5 font-black text-accent-primary">
+                                                ₹{product.price?.toLocaleString()}
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <div className="flex flex-col gap-1.5">
+                                                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest">
+                                                        <span className={parseInt(product.quantity) < 10 ? 'text-accent-danger' : 'text-secondary'}>
+                                                            {product.quantity} In Stock
                                                         </span>
+                                                        <span className="text-secondary/60">{product.soldQuantity || 0} Sold</span>
                                                     </div>
-
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        <button
-                                                            onClick={() => handleEdit(p)}
-                                                            className="flex items-center justify-center gap-3 py-5 bg-cyan-500/10 border border-cyan-500/30 rounded-2xl text-[11px] font-black tracking-[0.3em] uppercase text-cyan-400 hover:bg-cyan-500 hover:text-slate-950 transition-all active:scale-95 shadow-lg"
-                                                            disabled={actionLoading}
-                                                        >
-                                                            <Edit3 className="w-4 h-4" />
-                                                            Modify
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDelete(p.productId)}
-                                                            className="flex items-center justify-center gap-3 py-5 bg-red-500/5 border border-red-500/20 rounded-2xl text-[11px] font-black tracking-[0.3em] uppercase text-red-500/70 hover:bg-red-500 hover:text-white transition-all active:scale-95"
-                                                            disabled={actionLoading}
-                                                        >
-                                                            <Trash2 className="w-4 h-4" />
-                                                            Dispose
-                                                        </button>
+                                                    <div className="w-32 h-1.5 rounded-full bg-white/5 border border-glass overflow-hidden">
+                                                        <div
+                                                            className={`h-full rounded-full transition-all duration-1000 ${parseInt(product.quantity) < 10
+                                                                ? 'bg-gradient-to-r from-accent-danger to-orange-500'
+                                                                : 'bg-gradient-to-r from-accent-primary to-accent-secondary'
+                                                                }`}
+                                                            style={{ width: `${Math.min(100, (parseInt(product.quantity) / 100) * 100)}%` }}
+                                                        />
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </div>
+                                            </td>
+                                            <td className="px-8 py-5">
+                                                <div className="flex items-center justify-end gap-2 opacity-60 group-hover:opacity-100 transition-opacity translate-x-0 transition-all duration-300">
+                                                    <button
+                                                        onClick={() => navigate('/sell/edit-product', { state: { product } })}
+                                                        className="p-2.5 rounded-xl bg-white/5 border border-glass text-accent-primary hover:bg-accent-primary hover:text-white transition-all shadow-sm"
+                                                    >
+                                                        <Edit3 className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(product.productId)}
+                                                        className="p-2.5 rounded-xl bg-white/5 border border-glass text-accent-danger hover:bg-accent-danger hover:text-white transition-all shadow-sm"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
                                     ))}
+                                </tbody>
+                            </table>
+                            {filteredProducts.length === 0 && (
+                                <div className="p-20 text-center flex flex-col items-center gap-4">
+                                    <div className="p-5 rounded-full bg-white/5 border border-glass animate-float">
+                                        <ShoppingBag className="w-12 h-12 text-secondary/30" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold">No products found</h3>
+                                        <p className="text-secondary">Try adjusting your search or add a new product.</p>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -358,15 +367,14 @@ const SellerDashboard = () => {
                 </div>
             </div>
 
-            <style dangerouslySetInnerHTML={{
-                __html: `
-                .clip-path-inner { clip-path: polygon(18px 0, calc(100% - 18px) 0, 100% 18px, 100% calc(100% - 18px), calc(100% - 18px) 100%, 18px 100%, 0 calc(100% - 18px), 0 18px); }
-                .octagon-card { clip-path: polygon(19px 0, calc(100% - 19px) 0, 100% 19px, 100% calc(100% - 19px), calc(100% - 19px) 100%, 19px 100%, 0 calc(100% - 19px), 0 19px); background: linear-gradient(135deg, rgba(34, 211, 238, 0.4), rgba(217, 70, 239, 0.4)); }
-                @keyframes pulse-slow { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } }
-                .animate-pulse-slow { animation: pulse-slow 4s infinite ease-in-out; }
-            `}} />
+            <BulkUploadModal 
+                isOpen={showBulkModal} 
+                onClose={() => setShowBulkModal(false)} 
+                onRefresh={fetchDashboardData}
+            />
         </div>
     );
 };
+
 
 export default SellerDashboard;

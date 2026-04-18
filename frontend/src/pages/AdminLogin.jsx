@@ -23,12 +23,25 @@ const AdminLogin = () => {
 
         try {
             const response = await adminAPI.login(formData);
-            const { token, admin } = response.data;
-            login(token, admin.adminId, admin);
-            navigate('/admin/dashboard');
+            const { token, admin } = response.data || {};
+            
+            if (token && admin) {
+                login(token, admin.adminId, admin);
+                console.log(`[AUTH] Admin portal access verified for ${admin.role}. Synchronizing...`);
+                
+                const target = admin.role === 'superadmin' ? '/superadmin/dashboard' : '/admin/dashboard';
+                navigate(target, { replace: true });
+            } else {
+                throw new Error('Terminal Failure: Identity matrix incomplete.');
+            }
         } catch (err) {
-            const errorMessage = err.response?.data?.message || err.message || 'Admin login failed (Check if backend is running)';
+            const errorMessage = err.response?.data?.message || err.message || 'Terminal Failure: Uplink to backend interrupted.';
             setError(errorMessage);
+
+            // Helpful logging for the console
+            if (err.response?.status === 401) {
+                console.warn('[AUTH] Access Denied: Verified Identity Required.');
+            }
         } finally {
             setLoading(false);
         }
@@ -120,15 +133,25 @@ const AdminLogin = () => {
                     </button>
                 </form>
 
-                <p className="mt-8 text-center text-sm" style={{ color: 'var(--text-muted)' }}>
-                    Need admin access?{' '}
-                    <button
-                        onClick={() => navigate('/admin/register')}
-                        className="font-semibold transition-colors decoration-purple-400/30 hover:underline underline-offset-4"
-                        style={{ color: '#8b5cf6' }}
-                    >
-                        Register here
-                    </button>
+                <p className="mt-8 text-center text-sm flex flex-col gap-3" style={{ color: 'var(--text-muted)' }}>
+                    <div>
+                        Need admin access?{' '}
+                        <button
+                            onClick={() => navigate('/admin/register')}
+                            className="font-semibold transition-colors decoration-purple-400/30 hover:underline underline-offset-4"
+                            style={{ color: '#8b5cf6' }}
+                        >
+                            Register here
+                        </button>
+                    </div>
+                    <div className="pt-4 border-t border-white/5">
+                        <button
+                            onClick={() => navigate('/shop')}
+                            className="text-xs uppercase tracking-[0.2em] font-black opacity-60 hover:opacity-100 transition-opacity"
+                        >
+                            Return to Shopping Repository
+                        </button>
+                    </div>
                 </p>
             </div>
         </div>

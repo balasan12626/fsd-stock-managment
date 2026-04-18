@@ -14,8 +14,13 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('token', newToken);
         localStorage.setItem('userId', newUserId);
         if (userData) {
-            localStorage.setItem('user', JSON.stringify(userData));
-            setUser(userData);
+            // Ensure userData has a role even if derived from sellerId
+            const finalUser = {
+                ...userData,
+                role: userData.role || (userData.sellerId ? 'seller' : 'customer')
+            };
+            localStorage.setItem('user', JSON.stringify(finalUser));
+            setUser(finalUser);
         }
         setToken(newToken);
         setUserId(newUserId);
@@ -32,12 +37,33 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     };
 
-    const isAuthenticated = () => !!token;
+    const isAuthenticated = () => !!token || !!localStorage.getItem('token');
 
-    const getRole = () => user?.role || (user?.sellerId ? 'seller' : null);
+    const getRole = () => {
+        if (user?.role) return user.role;
+        const savedUser = localStorage.getItem('user');
+        if (savedUser) {
+            try {
+                const parsed = JSON.parse(savedUser);
+                if (parsed.role) return parsed.role;
+                // Heuristic fallback if role is missing but ID is present
+                if (parsed.sellerId) return 'seller';
+                if (parsed.adminId) return 'admin';
+                if (parsed.customerId) return 'customer';
+            } catch (e) {
+                return null;
+            }
+        }
+        return null;
+    };
+    
+    // Explicitly check for portals
+    const isAdmin = () => ['admin', 'superadmin'].includes(getRole());
+    const isSeller = () => getRole() === 'seller';
+    const isCustomer = () => getRole() === 'customer';
 
     return (
-        <AuthContext.Provider value={{ token, userId, user, login, logout, isAuthenticated, getRole }}>
+        <AuthContext.Provider value={{ token, userId, user, login, logout, isAuthenticated, getRole, isAdmin, isSeller, isCustomer }}>
             {children}
         </AuthContext.Provider>
     );

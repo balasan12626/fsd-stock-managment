@@ -290,10 +290,64 @@ const deleteProductAsAdmin = async (req, res) => {
     }
 };
 
+/**
+ * Get all customers
+ * Admin only
+ */
+const getAllCustomers = async (req, res) => {
+    try {
+        const params = { TableName: 'Customers' };
+        const result = await dynamoDB.send(new ScanCommand(params));
+        const customers = (result.Items || []).map(({ password, ...rest }) => rest);
+
+        res.json({
+            success: true,
+            count: customers.length,
+            customers
+        });
+    } catch (error) {
+        console.error('Get all customers error:', error);
+        res.status(500).json({ success: false, message: 'Error fetching customers', error: error.message });
+    }
+};
+
+/**
+ * Delete a customer
+ * Admin only
+ */
+const deleteCustomer = async (req, res) => {
+    try {
+        const { email } = req.params;
+        await dynamoDB.send(new DeleteCommand({ TableName: 'Customers', Key: { email } }));
+        res.json({ success: true, message: 'Customer account deleted successfully' });
+    } catch (error) {
+        console.error('Delete customer error:', error);
+        res.status(500).json({ success: false, message: 'Error deleting customer', error: error.message });
+    }
+};
+
+/**
+ * Delete a seller
+ * Admin only
+ */
+const deleteSeller = async (req, res) => {
+    try {
+        const { sellerId } = req.params;
+        await dynamoDB.send(new DeleteCommand({ TableName: 'Sellers', Key: { sellerId } }));
+        res.json({ success: true, message: 'Seller account deleted successfully' });
+    } catch (error) {
+        console.error('Delete seller error:', error);
+        res.status(500).json({ success: false, message: 'Error deleting seller', error: error.message });
+    }
+};
+
 module.exports = {
     getAllProducts,
     getAllSellers,
     getProductWithSeller,
     getDashboardStats,
-    deleteProductAsAdmin
+    deleteProductAsAdmin,
+    getAllCustomers,
+    deleteCustomer,
+    deleteSeller
 };

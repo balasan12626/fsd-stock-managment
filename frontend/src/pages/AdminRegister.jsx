@@ -30,8 +30,8 @@ const AdminRegister = () => {
         }
 
         // Validate password length
-        if (formData.password.length < 6) {
-            setError('Password must be at least 6 characters long');
+        if (formData.password.length < 8) {
+            setError('Security protocol: Password must be at least 8 characters long');
             return;
         }
 
@@ -42,7 +42,7 @@ const AdminRegister = () => {
             const response = await adminAPI.register(registrationData);
 
             const successMessage = response.data.status === 'pending'
-                ? 'Registration submitted! Please wait for super admin (sbb502122005@gmail.com) approval before logging in.'
+                ? 'Registration submitted! Please wait for super admin (balasan2626@gmail.com) approval before logging in.'
                 : 'Super Admin registered successfully! You can now login.';
 
             navigate('/admin/login', {

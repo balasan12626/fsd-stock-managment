@@ -16,4 +16,4 @@ const s3 = new S3Client(config);
 const dynamoClient = new DynamoDBClient(config);
 const dynamoDB = DynamoDBDocumentClient.from(dynamoClient);
 
-module.exports = { s3, dynamoDB };
+module.exports = { s3, dynamoDB, dynamoDBClient: dynamoClient };

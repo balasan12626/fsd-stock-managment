@@ -1,0 +1,23 @@
+[2026-01-01T14:33:43.032Z] Starting Table Sync...
+[2026-01-01T14:33:43.050Z] Using Region: ap-south-1
+[2026-01-01T14:33:43.334Z] Existing Tables: Admins, Products, Sellers
+[2026-01-01T14:33:43.335Z] Table Products already exists.
+[2026-01-01T14:33:43.335Z] Table Sellers already exists.
+[2026-01-01T14:33:43.336Z] Creating Table: Customers...
+[2026-01-01T14:33:43.409Z] Successfully initiated creation of Customers
+[2026-01-01T14:33:43.409Z] Creating Table: Carts...
+[2026-01-01T14:33:43.483Z] Successfully initiated creation of Carts
+[2026-01-01T14:33:43.484Z] Sync Complete.
+[2026-01-01T14:36:49.307Z] Starting Table Sync...
+[2026-01-01T14:36:49.316Z] Using Region: ap-south-1
+[2026-01-01T14:36:49.545Z] Existing Tables: Admins, Carts, Customers, Products, Sellers
+[2026-01-01T14:36:49.551Z] Table Products already exists.
+[2026-01-01T14:36:49.551Z] Table Sellers already exists.
+[2026-01-01T14:36:49.552Z] Table Customers already exists.
+[2026-01-01T14:36:49.553Z] Table Carts already exists.
+[2026-01-01T14:36:49.553Z] Waiting for all tables to become ACTIVE...
+[2026-01-01T14:36:49.610Z] Table Products is now ACTIVE.
+[2026-01-01T14:36:49.677Z] Table Sellers is now ACTIVE.
+[2026-01-01T14:36:49.738Z] Table Customers is now ACTIVE.
+[2026-01-01T14:36:49.789Z] Table Carts is now ACTIVE.
+[2026-01-01T14:36:49.790Z] Sync Complete. All tables ACTIVE.

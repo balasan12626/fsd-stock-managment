@@ -1,20 +1,44 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 require('dotenv').config();
 
-const { registerSeller, loginSeller, getSellerProfile, refreshToken } = require('./controllers/sellerController');
+const sellerController = require('./controllers/sellerController');
 const { addProduct, updateProduct, deleteProduct, getSellerProducts } = require('./controllers/productController');
 const { registerAdmin, loginAdmin, getAdminProfile, getAllAdmins, updateAdminStatus } = require('./controllers/adminController');
 const { getSellerPerformanceReport, getSellerDetailedReport } = require('./controllers/analyticsController');
-const { getAllProducts, getAllSellers, getProductWithSeller, getDashboardStats, deleteProductAsAdmin } = require('./controllers/adminDashboardController');
+const { getAllProducts, getAllSellers, getProductWithSeller, getDashboardStats, deleteProductAsAdmin, getAllCustomers, deleteCustomer, deleteSeller } = require('./controllers/adminDashboardController');
+const analyticsController = require('./controllers/analyticsController');
 const { getSellerTransactions, postTransaction } = require('./controllers/transactionsController');
-const authMiddleware = require('./middleware/authMiddleware');
+const { protect, authorize } = require('./middleware/authMiddleware');
 const adminMiddleware = require('./middleware/adminMiddleware');
 const upload = require('./middleware/uploadMiddleware');
+const customerRoutes = require('./routes/customerRoutes');
+const publicRoutes = require('./routes/publicRoutes');
+
+const customerController = require('./controllers/customerController');
+
+const { loginLimiter, apiLimiter } = require('./middleware/rateLimitMiddleware');
+const xss = require('xss-clean');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 
-// Permissive CORS for all origins and methods
+// --- SECURITY PROTOCOLS ---
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            scriptSrc: ["'self'", "'unsafe-inline'"],
+            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+            fontSrc: ["'self'", "https://fonts.gstatic.com"],
+            imgSrc: ["'self'", "data:", "https:", "http:"],
+            connectSrc: ["'self'", "https:", "http:"]
+        }
+    }
+}));
+
+// 3. CORS (must come before body parsers to handle preflight OPTIONS)
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -22,7 +46,25 @@ app.use(cors({
     credentials: true
 }));
 
-app.use(express.json());
+app.use(xss()); // XSS sanitization on all incoming request bodies
+app.use(cookieParser());
+app.use(express.json({ limit: '10kb' }));        // JSON body limit - prevent DOS
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+
+// 4. Global API Rate Limiter
+app.use('/api/', apiLimiter);
+
+const { registerValidation, loginValidation } = require('./middleware/validationMiddleware');
+
+// System Core Health Check
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'Operational',
+        timestamp: new Date().toISOString(),
+        core: 'a6b-v2.5',
+        security: 'Armed'
+    });
+});
 
 // Request logger for debugging
 app.use((req, res, next) => {
@@ -31,25 +73,27 @@ app.use((req, res, next) => {
 });
 
 // Public routes - Seller
-app.post('/api/seller/register', upload.single('logo'), registerSeller);
-app.post('/api/seller/login', loginSeller);
+app.post('/api/seller/register', upload.single('logo'), registerValidation, sellerController.registerSeller);
+app.post('/api/seller/login', loginLimiter, loginValidation, sellerController.loginSeller);
 
 // Public routes - Admin
-app.post('/api/admin/register', registerAdmin);
-app.post('/api/admin/login', loginAdmin);
+app.post('/api/admin/register', registerValidation, registerAdmin);
+app.post('/api/admin/login', loginLimiter, loginValidation, loginAdmin);
 
 // Protected seller routes
-app.get('/api/seller/profile', authMiddleware, getSellerProfile);
-app.post('/api/seller/refresh-token', authMiddleware, refreshToken);
-app.get('/api/seller/report', authMiddleware, getSellerDetailedReport);
+app.get('/api/seller/profile', protect, authorize('seller'), sellerController.getSellerProfile);
+app.post('/api/seller/refresh-token', protect, authorize('seller'), sellerController.refreshToken);
+app.get('/api/analytics/report', protect, authorize('seller'), analyticsController.getSellerDetailedReport);
+app.get('/api/analytics/forecast', protect, authorize('seller'), analyticsController.getDemandForecast); // AI Route
 
 // Protected product routes
-app.post('/api/product/add', authMiddleware, upload.array('images', 5), addProduct);
-app.put('/api/product/update', authMiddleware, updateProduct);
-app.post('/api/transactions', authMiddleware, postTransaction);
-app.delete('/api/product/delete/:productId', authMiddleware, deleteProduct);
-app.get('/api/product/seller-products', authMiddleware, getSellerProducts);
-app.get('/api/transactions/seller', authMiddleware, getSellerTransactions);
+app.post('/api/seller/products', protect, authorize('seller', 'admin'), upload.array('images', 5), addProduct);
+app.post('/api/seller/products/bulk', protect, authorize('seller', 'admin'), sellerController.bulkAddProducts);
+app.get('/api/seller/products/:sellerId', protect, authorize('seller', 'admin'), getSellerProducts);
+app.post('/api/transactions', protect, authorize('seller', 'customer'), postTransaction);
+app.delete('/api/product/delete/:productId', protect, authorize('seller'), deleteProduct);
+app.get('/api/product/seller-products', protect, authorize('seller'), getSellerProducts);
+app.get('/api/transactions/seller', protect, authorize('seller'), getSellerTransactions);
 
 // Protected admin routes
 app.get('/api/admin/profile', adminMiddleware, getAdminProfile);
@@ -61,6 +105,18 @@ app.delete('/api/admin/products/:productId', adminMiddleware, deleteProductAsAdm
 app.get('/api/admin/manage/all', adminMiddleware, getAllAdmins);
 app.put('/api/admin/manage/status/:adminId', adminMiddleware, updateAdminStatus);
 app.get('/api/admin/reports/seller-performance', adminMiddleware, getSellerPerformanceReport);
+app.get('/api/admin/orders', adminMiddleware, customerController.getAllOrders);
+app.get('/api/admin/customers', adminMiddleware, getAllCustomers);
+app.delete('/api/admin/customers/:email', adminMiddleware, deleteCustomer);
+app.delete('/api/admin/sellers/:sellerId', adminMiddleware, deleteSeller);
+
+// Seller Order Routes
+app.get('/api/seller/orders/:sellerId', protect, authorize('seller', 'admin', 'superadmin'), customerController.getSellerOrders);
+
+// Customer Routes
+app.use('/api/public', publicRoutes);
+app.put('/api/orders/:orderId/status', protect, authorize('seller', 'admin', 'superadmin'), customerController.updateOrderStatus);
+app.use('/api/customer', customerRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
